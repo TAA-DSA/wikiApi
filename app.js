@@ -21,9 +21,96 @@ const blogSchema = {
 
 const articles = mongoose.model("articles", blogSchema);
 
-app.get("/", (res, req) => {
-  req.send("<h1>Hello WikiApi<h1>");
-});
+app
+  .route("/articles")
+
+  .get((req, res) => {
+    articles.find({}, (err, results) => {
+      if (!err) {
+        res.send(results);
+      } else {
+        res.send(err);
+      }
+    });
+  })
+
+  .post((req, res) => {
+    const newArticle = new articles({
+      title: req.body.title,
+      content: req.body.content,
+    });
+    newArticle.save((err) => {
+      if (!err) {
+        res.send("Succesfully added a new article");
+      } else {
+        res.send(err);
+      }
+    });
+  })
+
+  .delete((req, res) => {
+    articles.deleteMany({}, (err) => {
+      if (!err) {
+        res.send("Items deleted successfully");
+      } else {
+        res.send(err);
+      }
+    });
+  });
+
+app
+  .route("/articles/:articleTitle")
+
+  .get((req, res) => {
+    articles.findOne(
+      { title: req.params.articleTitle },
+      (err, foundArticle) => {
+        if (foundArticle) {
+          res.send(foundArticle);
+        } else {
+          res.send("No article found matching the search Query!!");
+        }
+      }
+    );
+  })
+
+  .put((req, res) => {
+    articles.findOneAndUpdate(
+      { title: req.params.articleTitle },
+      { title: req.body.title, content: req.body.content },
+      { overwrite: true },
+      (err) => {
+        if (!err) {
+          res.send("Successful updated article");
+        } else {
+          res.send("Err preventing updates, please try again !!");
+        }
+      }
+    );
+  })
+
+  .patch((req, res) => {
+    articles.findOneAndUpdate(
+      { title: req.params.articleTitle },
+      { $set: req.body },
+      (err) => {
+        if (!err) {
+          res.send("Successfuly updated !!");
+        } else {
+          res.send("Err preventing updates");
+        }
+      }
+    );
+  })
+  .delete((req, res) => {
+    articles.deleteOne({ title: req.params.articleTitle }, (err) => {
+      if (!err) {
+        res.send("Article successfully deleted !!");
+      } else {
+        res.send("Err, article cannot be deleted !!!");
+      }
+    });
+  });
 
 app.listen(PORT, () => {
   console.log(`Server 🚀 starting on port ${PORT}`);
